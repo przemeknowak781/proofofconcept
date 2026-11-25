@@ -1,5 +1,7 @@
 # Odtworzenie z czystego klonu
 
+**Autorem odtwarzanego dowodu jest Filip Majchrzak.** [Publikacja źródłowa, wydanie 2.0.0](https://doi.org/10.5281/zenodo.24523144)
+
 Wymagania do całości to Python 3.12 (w lokalnym przebiegu 3.12.10), Git, Bash, make, kompilator C oraz elan/Lake dla Lean. Kroki 1–3 można wykonać bez Lean. Wszystkie polecenia zaczynają się w katalogu głównym repozytorium; polecenia powłoki w blokach sh zakładają system POSIX. Dla Windows podano oddzielny wariant generatorów.
 
 ## 1. Sprawdzenie wejść

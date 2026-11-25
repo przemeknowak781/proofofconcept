@@ -1,5 +1,7 @@
 # Co dokładnie sprawdziliśmy
 
+**Autorem dowodu jest Filip Majchrzak.** Poniższy raport dokumentuje sprawdzenie jego twierdzenia i obliczeń. [Oryginalna praca](https://doi.org/10.5281/zenodo.24523144)
+
 Niech m ≥ 1 będzie liczbą krawędzi skończonego multigrafu G, a τ(G) liczbą jego drzew rozpinających. Formalizacja v2 dowodzi **τ(G)² · 8ᵐ < 27ᵐ**. Dla każdego 0 < c < 27/8 istnieje graf z cᵐ < τ(G)². Razem daje to **sup τ(G)^(1/m) = √(27/8)**. Ścisła nierówność oznacza, że żaden pojedynczy skończony graf o dodatniej liczbie krawędzi nie osiąga supremum.
 
 | Kontrola | Metoda i wynik | Ślad |

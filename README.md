@@ -1,5 +1,7 @@
 # Drzewa rozpinające na krawędź — dowód i odtworzenie obliczeń
 
+**Autorem dowodu jest Filip Majchrzak.** Niniejsze repozytorium udostępnia jego pracę wraz z materiałami z niezależnej weryfikacji. Przy cytowaniu dowodu należy wskazać Filipa Majchrzaka i [oryginalne wydanie na Zenodo](https://doi.org/10.5281/zenodo.24523144).
+
 Repozytorium zawiera kompletne wydanie 2.0.0 pracy **Filipa Majchrzaka** *Spanning trees per edge: a sharp bound and a question of Kenyon* oraz odrębny pakiet weryfikacyjny. Dla każdego skończonego multigrafu o m ≥ 1 krawędziach liczba drzew rozpinających τ spełnia **τ² · 8ᵐ < 27ᵐ**. Supremum τ^(1/m) po takich grafach wynosi **√(27/8)**. Publikacja obejmuje argument analityczny i drugi dowód sformalizowany w Lean 4. [Zenodo v2.0.0](https://doi.org/10.5281/zenodo.24523144) · [Oryginalny commit](https://github.com/kosza123/flow-certificate-thresholds/tree/b4c5b60f61766ea11cb7e72cc493181ac06f6c68)
 
 | Chcę… | Punkt wejścia | Materiał kontrolny |

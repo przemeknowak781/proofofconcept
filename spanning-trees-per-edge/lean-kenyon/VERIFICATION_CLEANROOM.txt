@@ -1,0 +1,134 @@
+CLEAN-ROOM VERIFICATION OF THE LEAN PROJECT Kenyon (21 modules) WITH TreeEntropy (8 modules)
+==========================================================================================
+
+Date (UTC):   2026-11-25, 06:25-06:33
+Performed by: an AI agent in a Linux container, for the author.
+Result:       PASS.  Limitations are listed in section 6.
+
+1. What was verified
+--------------------
+The directory containing this file as recorded in version control at commit 1e366aa of
+https://github.com/kosza123/flow-certificate-thresholds (directory
+spanning-trees-per-edge/lean-kenyon), without this file and without the directory logs/: the 39
+files listed in section 5.  They were taken with `git archive` and unpacked into a new empty
+directory <clean>/pkg outside any repository.  Before the run: no `.lake` directory, no symbolic
+link, MATHLIB_CACHE_DIR pointing to a new empty directory <clean>/cache.  This file and logs/
+were written after the run.
+
+2. Environment
+--------------
+Linux 6.18.44 x86_64, 4 CPUs, 15 GB RAM
+elan 4.4.0
+Lean (version 4.37.0-rc1, x86_64-unknown-linux-gnu, commit 0b77e12952ad39077d80d8bd6b66d601f225c321, Release)
+Lake version 5.0.0-src+0b77e12 (Lean version 4.37.0-rc1)
+Mathlib checked out by Lake at 53dad9ed98be8416b6ca1111e55a03de4303231f
+(as pinned in lean-toolchain, lakefile.toml and lake-manifest.json)
+
+3. Commands and real outputs
+----------------------------
+$ lake exe cache get                                   exit 0, 178 s   (started 06:25:29)
+    Decompressed 9139 file(s)
+
+$ ./scripts/check.sh        (unchanged)                exit 0, 246 s   (started 06:28:27)
+    Build completed successfully (18367 jobs).
+    OK: build, 39 axiom reports, kernel replay of 29 modules
+
+Wall time of the two commands together: 424 s.  No error and no warning from the Lean sources.
+During the build Lake prints one hint per Mathlib import ("... designed for use with the module
+system; consider adding `module` ..."); check.sh removes these lines from its output, and Lake
+marks the two affected build steps with a warning sign.
+
+check.sh runs, in this order, and stops at the first failure: lake build; a scan of the sources
+in Kenyon/ and TreeEntropy/ for sorry / admit / axiom / native_decide; scripts/PrintAxioms.lean
+(39 theorems, every reported axiom must be one of propext, Classical.choice, Quot.sound);
+leanchecker (replay of every declaration in the kernel) on the 29 modules that contain
+declarations (21 of Kenyon, 8 of TreeEntropy).
+
+4. Controls, run separately after check.sh
+------------------------------------------
+Axiom lists reported for the 39 theorems (logs/axiom_reports.txt):
+     39 theorems:  [propext, Classical.choice, Quot.sound]
+In particular:
+    'Kenyon.kenyon_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'Kenyon.kenyon_bound_real' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'Kenyon.kenyon_sharp' depends on axioms: [propext, Classical.choice, Quot.sound]
+
+That the check can fail was tested three times (logs/negative_controls.txt):
+$ lake env leanchecker Kenyon.NoSuchModule             exit 1
+    uncaught exception: Could not find any oleans for: Kenyon.NoSuchModule
+Step b.  In a copy, one line appended to Kenyon/Examples.lean:
+    theorem Kenyon.placeholderControl : (1 : Nat) = 2 := by sorry
+$ ./scripts/check.sh                                   exit 1
+    FAIL: placeholder, axiom or native_decide in the sources
+Step c.  In another copy, two lines appended to scripts/PrintAxioms.lean:
+    theorem axiomControl : (1 : Nat) = 2 := sorry
+    #print axioms axiomControl
+$ ./scripts/check.sh                                   exit 1
+    'axiomControl' depends on axioms: [sorryAx]
+    FAIL: unexpected axiom
+The copies used the downloaded packages of the clean run through a symbolic link.  The failure
+of the kernel replay on a module that compiles but does not pass the kernel was not tested.
+
+The run created .lake/packages (7.5 GB), .lake/build (365 MB) and <clean>/cache (473 MB).
+No file was modified: after check.sh and again after the controls every file had the sha256
+listed below.  Lake did not rewrite lake-manifest.json.
+
+The eight files TreeEntropy/*.lean and TreeEntropy.lean are byte-identical to those of the
+package of version 1 in ../lean/.
+
+5. Files verified (sha256)
+--------------------------
+fde850d24186b6e99c8c0debd641fb3ab85198b109eb66f71a1fea02bd6ea1b3  .gitignore
+2feb51b7047c0897b3c7aa1fec34bcb93b2ee965369019d9d54b8abd847f1228  Kenyon.lean
+6c920bd637dd2cbc1b1149e7c6f17985440be084f5719a93cf394a8e08fd788b  Kenyon/Amplify.lean
+92045151f5844bb1f53cd631a549a9a41c6bdfa769c8a2141f07124f98b6b8c5  Kenyon/Bethe.lean
+dee3f2df4fef15fa15fb8be2714644214b83d28aa73d868c4549fc151560f76f  Kenyon/BetheFun.lean
+70450a28e0430e10a80f24aeeebd2cf6b60cd873b0e043cb685e890d5ab04b28  Kenyon/Cayley.lean
+bb18b93441847cd99ce8e8a35db2b974e3c3702e7b2f8facf6624c02f588546e  Kenyon/Contract.lean
+508b313cf4c6cc8df5875bfe91b8be008ee269002fc12ecf7f47bf251e61a55d  Kenyon/Count.lean
+44f11ddd2faf782fc549ec2bb694d541c431226bfa4fdd8b45152a52bc474817  Kenyon/Examples.lean
+7ecaac9b9a5e1160470be16f481058b9275ab87306515499e089024c17195025  Kenyon/Forest.lean
+01147ef5ec601b8ff5730e35055b3c69ed825aba5f46364377a927beb6c45069  Kenyon/ForestCount.lean
+9cbbff25e08555c5b6716a64d486282746718e481c1bbf0e3bbdf240324dbc9c  Kenyon/Green.lean
+83fad8c53c10a1cc2b702a18aca923a77b2f719f7c1b37cbfc8aa48a75b3e768  Kenyon/Lap.lean
+feb5ac7a9142cfc26cd4f090d99630b1bcfbf08fcad668c6dddc198ab3ab437e  Kenyon/Levels.lean
+114adefa0389b74b8d23eddd4086af9c0892b05694b97bc38a5719bceacf77f4  Kenyon/LogDet.lean
+7f3b395d1aa3750367e3965cb2c0273abde8bfc55cc9525664b72eed0f1b66f3  Kenyon/Main.lean
+a4435c257f18321657c0e24f03c793f89988162186e1101967c1b798ff679f14  Kenyon/MatrixTree.lean
+e6fc9648eea76c002ae3cfd7c182ce5cd7d7bd85e54fec9ecd2492be9138692d  Kenyon/MatrixTree2.lean
+8c7edec93b0f8cb765f0bd80ad69ba2fd166805829775867fe498491936744f2  Kenyon/OneStep.lean
+dba689bb73d923fd73dd1ab18ca53110193cae663f0179b544b2f0a413c58ac9  Kenyon/Regular.lean
+4945da746ddcfc09de768d5603acd47368a01b912b8eafd9594c030ded8de232  Kenyon/Sanov.lean
+ca64d4660f78916e4d95208ef4fe4f5fea28c4ebaf6f94d2788807f65a08aa66  Kenyon/Sharp.lean
+f2b384f051a6e30f4d1dcbb370411c38b48d2da3280ba91ea3bd802df8796a98  Kenyon/Super.lean
+35cc0bc141963b989950ffc62bdfa548d6292f18d90feba3eb8f45eef873eebd  PROOF_ROUTE.md
+8756e03f3451ec8cebb13cf6429b0716c16838536470ae4afd080873f60620ab  README.md
+7494af17cf808e2f8e17ebae181addedb1e7d3ee93911cde568be6c4dd475919  TreeEntropy.lean
+45dec16e21674d068167122afb6d9200adc19cb0b620ec89fc716b72231b50db  TreeEntropy/APriori.lean
+6933b8072441e696da3a6c9c40dd476c43f327d80248676f5418026745b5dc6d  TreeEntropy/Darts.lean
+a79dcdaa97e23f82518e79dae4550c778f606dbaa4d86328211d67c573533144  TreeEntropy/Large.lean
+0764eb8e3af76aaf65f1a2bdc1006c88eaad70ffe21a8f4a57c4866829f4825e  TreeEntropy/Main.lean
+0329200623f0c172d08e7ddfb00f2e7fa2111d6b0ee07c535963feb1618e6b2e  TreeEntropy/OneVar.lean
+28277fb12c372329756a4d1cf066be35c3a27df2393ab51c320e1330b4a46a91  TreeEntropy/Sharp.lean
+54a7b7781935426ca787bb156bb0eb4ba763df06a51041727c425f41fbeaf440  TreeEntropy/Sum.lean
+f385844d77f9ffd42eacb7b2c47e71d2cb4140ff02334cffb2e240ddb80490e5  TreeEntropy/Table.lean
+2ffb1adf820512ce4cd19736bb2668d2f1d3049bcbc5d8320110d420c12e85a9  lake-manifest.json
+66f1a14ed33bac418c7e85aa2fe7d8b1500c40dccc2134e5d2b7e16974f84ab6  lakefile.toml
+f11739c25d1640e2b3fda8a98af6d64e97d7b2b1c99840535587a9079b3afee7  lean-toolchain
+041ca8c88d7d478940baf2952ff0e2a723a9320fd187dade51f0c48e2834e918  scripts/PrintAxioms.lean
+9d8c63b8bf412a2181cb57bcc2cc64c34b8ab5baa224698292b91f75cb1e596b  scripts/check.sh
+
+6. Limitations
+--------------
+* Mathlib was used as distributed: its compiled files were downloaded by `lake exe cache get`
+  and were not replayed in the kernel here.
+* The two root modules `Kenyon` and `TreeEntropy` contain only imports and are not replayed
+  (in this environment the replay of `Kenyon` exceeds the memory limit); every module with
+  declarations is replayed.
+* One environment, one run.  The verification was done by the AI agent that wrote the proofs,
+  not by an independent party.
+* Lean certifies the theorems for the definitions in the files.  That `numTrees` is the number
+  of spanning trees in the sense of the paper is a matter of reading four definitions in
+  Kenyon/Forest.lean; Kenyon/Examples.lean checks two small cases.
+* The proofs follow the second proof of the paper (Section 10), which differs from the proof of
+  its Sections 2 to 7; see README.md, "What is NOT proved here".

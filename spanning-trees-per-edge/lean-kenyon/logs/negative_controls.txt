@@ -1,0 +1,14 @@
+== leanchecker on a missing module (exit 1)
+uncaught exception: Could not find any oleans for: Kenyon.NoSuchModule
+
+== control b: check.sh on a copy with a proof placeholder appended to Kenyon/Examples.lean (exit 1)
+⚠ [18366/18367] Ran Kenyon:irArts
+Build completed successfully (18367 jobs).
+Kenyon/Examples.lean:62:theorem Kenyon.placeholderControl : (1 : Nat) = 2 := by sorry
+FAIL: placeholder, axiom or native_decide in the sources
+
+== control c: check.sh on a copy with a sorry-theorem appended to scripts/PrintAxioms.lean (exit 1)
+⚠ [18366/18367] Ran Kenyon:irArts
+Build completed successfully (18367 jobs).
+'axiomControl' depends on axioms: [sorryAx]
+FAIL: unexpected axiom

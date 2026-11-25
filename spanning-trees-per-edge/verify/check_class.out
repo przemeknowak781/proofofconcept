@@ -1,0 +1,6 @@
+graphs: 300  with a vertex of degree 2: 190
+max |closed formula - integral|  = 4.22e-14
+max defect of the identities     = 3.55e-15
+max (rbar - range bound)         = -1.144e-01   (must be <= 0)
+max (E_e - L)                    = -1.110e-16   (must be <= 0 up to rounding)
+max (Phi/m - L)                  = 0.000e+00   (must be <= 0 up to rounding)

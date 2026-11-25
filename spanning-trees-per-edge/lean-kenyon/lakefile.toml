@@ -1,0 +1,15 @@
+name = "Kenyon"
+defaultTargets = ["TreeEntropy", "Kenyon"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "53dad9ed98be8416b6ca1111e55a03de4303231f"
+
+# The eight modules of the edge inequality (unchanged copies of the published package).
+[[lean_lib]]
+name = "TreeEntropy"
+
+# The remaining parts of the proof.
+[[lean_lib]]
+name = "Kenyon"

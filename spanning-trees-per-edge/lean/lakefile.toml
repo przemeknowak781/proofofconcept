@@ -1,0 +1,10 @@
+name = "TreeEntropy"
+defaultTargets = ["TreeEntropy"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "53dad9ed98be8416b6ca1111e55a03de4303231f"
+
+[[lean_lib]]
+name = "TreeEntropy"

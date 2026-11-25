@@ -1,0 +1,565 @@
+\documentclass[11pt]{amsart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amssymb,amsmath,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Spanning Trees per Edge: A Sharp Bound and a Question of Kenyon, with a Lean-Checked Key Inequality and Computer Certificates},pdfauthor={Filip Majchrzak}}
+\IfFileExists{microtype.sty}{\usepackage[expansion=false]{microtype}}{}
+\emergencystretch=3em
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\rb}{\bar r}
+\newcommand{\tht}{\theta}
+\DeclareMathOperator{\tr}{tr}
+
+\title[Spanning trees per edge]{Spanning Trees per Edge:\\ A Sharp Bound and a Question of Kenyon\\[4pt] {\normalfont\large with a Lean-checked key inequality and computer certificates}}
+\author{Filip Majchrzak}
+\address{Independent researcher, Poland (SAPIO MORPHEUS project)}
+\thanks{ORCID 0009-0007-3475-8900. Version 1.0, 24 November 2026. Archived at Zenodo, \href{https://doi.org/10.5281/zenodo.24504455}{doi:10.5281/zenodo.24504455}. Text licensed CC BY 4.0; code Apache-2.0.}
+\date{24 November 2026}
+
+\begin{document}
+
+\begin{abstract}
+Let $\tau(G)$ be the number of spanning trees of a finite multigraph $G$ with $m$ edges. We prove that
+\[
+  \tau(G)\;<\;\Bigl(\tfrac{27}{8}\Bigr)^{m/2}\;=\;(1.8371\ldots)^m\qquad(m\ge1),
+\]
+and that the base $\sqrt{27/8}$ cannot be lowered: it is approached by $4$-regular graphs of large girth, by
+theorems of McKay and Lyons. In 1996 Kenyon asked for the supremum of $\tau(G)^{1/m}$ over all graphs and over planar graphs;
+the first supremum is therefore $\sqrt{27/8}$. For planar graphs, equivalently for determinants of link diagrams,
+the bound improves the constant $1.8393$ of Stoimenow slightly, to $1.8371$; the conjectured planar value
+$1.7916$ remains open, and no argument that ignores planarity can go below $\sqrt{27/8}$. The proof compares
+$G$ with its universal cover, uses a known closed formula for the tree entropy of the cover, and bounds it edge
+by edge through one concavity step and an explicit one-variable inequality.
+The a priori bounds, the two identities and the key inequality (Sections \ref{sec:cover} and \ref{sec:edge}) are formalised in Lean~4 with Mathlib as statements about real numbers; the probabilistic input, the closed formula, the comparison with the cover and the reductions are ordinary proofs and are not formalised, so the theorem as a whole is not machine-checked. The numerical inequalities are also certified by interval arithmetic, and the theorem was confirmed exhaustively for all multigraphs with at most $14$ edges.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+All graphs are finite multigraphs: parallel edges and loops are allowed. We write $m$ for the number of edges and
+$\tau(G)$ for the number of spanning trees ($\tau=0$ if $G$ is disconnected). Throughout,
+\[
+  \tht:=\sqrt{27/8}=1.8371173\ldots,\qquad L:=\log\tht=\tfrac12\log\tfrac{27}{8}=0.6081976\ldots
+\]
+
+\begin{theorem}\label{thm:main}
+Every multigraph $G$ with $m\ge1$ edges satisfies $\tau(G)<\tht^{\,m}=(27/8)^{m/2}$.
+\end{theorem}
+
+\begin{proposition}[McKay; Lyons]\label{prop:sharp}
+If $G_j$ are connected $4$-regular graphs whose girth tends to infinity, then $\tau(G_j)^{1/m(G_j)}\to\tht$.
+\end{proposition}
+
+\begin{corollary}\label{cor:sup}
+$\sup_G\tau(G)^{1/m}=\sqrt{27/8}$, the supremum being over all multigraphs with at least one edge; it is not attained.
+\end{corollary}
+
+Proposition~\ref{prop:sharp} is classical: McKay \cite{McKay} determined the constant $(d-1)^{d-1}/(d^2-2d)^{d/2-1}$
+for $d$-regular graphs, which is $27/8$ per vertex for $d=4$, and Lyons \cite{Lyons} (Theorem~3.3 and
+Example~3.16 in the arXiv version) proved the convergence for every sequence of connected graphs whose random weak
+limit is the $4$-regular tree; girth tending to infinity implies this. A $4$-regular graph with $N$ vertices has
+$m=2N$ edges. Corollary~\ref{cor:sup} follows from Theorem~\ref{thm:main} and Proposition~\ref{prop:sharp}.
+
+\subsection*{A question of Kenyon}
+In his paper on tiling a rectangle with the fewest squares, Kenyon \cite{Kenyon} (\S9 of the arXiv version) needed
+an exponential bound
+for the number of spanning trees of a planar graph and wrote:
+\begin{quote}
+``\textbf{Problem 2.} Among all graphs with $m$ edges, which graph $G$ has the largest number of spanning trees
+$\kappa(G)$? What is the sup of $\kappa(G)^{1/m}$ over all graphs? Over planar graphs?''
+\end{quote}
+He records that the true value lies in the range $(1.79,2)$: the trivial bound is $2^m$, he mentions an unpublished
+bound $\lambda^m$ with some $\lambda<2$ due to N.~Young, and the square grid gives $e^{2C/\pi}=1.7916\ldots$ ($C$ is
+Catalan's constant). Corollary~\ref{cor:sup} answers the second of his three questions: \emph{the supremum over
+all graphs is $\sqrt{27/8}$.} The first question (the extremal graph for each $m$) and the third (planar graphs) are not
+answered here.
+
+\subsection*{Planar graphs and link determinants}
+For planar graphs the conjectured value is $e^{2C/\pi}$; it is attributed to Kenyon in
+\cite[Conjecture~2.3]{CKP}, where it is shown to be equivalent to a conjecture on determinants of links. The
+authors of \cite{CKP} also record, from Kenyon, that the conjectured planar bound fails for some non-planar
+graphs; Proposition~\ref{prop:sharp} is a quantitative form of this. Proven upper bounds for planar graphs are
+$1.8637^m$ (Fomin \cite{Fomin}) and $\delta^m$ with $\delta\approx1.8393$ the real root of $x^3=x^2+x+1$
+(Stoimenow \cite{Stoimenow}, stated for link diagrams; we quote it from \cite{CKP,GJKLZ}, see
+Section~\ref{sec:lit}). We have not found a better one in the literature.
+
+\begin{corollary}\label{cor:planar}
+\textup{(a)} Every planar multigraph with $m\ge1$ edges has fewer than $\tht^{\,m}$ spanning trees, so the planar
+supremum in Kenyon's problem lies in $[\,e^{2C/\pi},\sqrt{27/8}\,]=[1.7916\ldots,1.8371\ldots]$.
+
+\textup{(b)} For every link diagram $K$ with $k\ge1$ crossings, $\det(K)<(27/8)^{k/2}$; in the normalisation of
+\cite{CKP}, $2\pi\log\det(K)/k<\pi\log(27/8)=3.8214\ldots$
+\end{corollary}
+\noindent The corresponding numbers are $3.8288$ for Stoimenow's bound and $v_{\mathrm{oct}}=3.6639$ for the
+conjecture, where $v_{\mathrm{oct}}$ is the volume of the regular ideal hyperbolic octahedron. Part~(b) follows
+from~(a): the Tait graph of $K$ is planar with $k$ edges, and $\det(K)$ is a signed count of its spanning trees
+\cite[Lemma~2.1]{CKP}, hence at most $\tau$. The improvement over \cite{Stoimenow} is
+small. Its interest is that $\tht$ is exact for general graphs, so it marks the limit of every method that does
+not use planarity.
+
+\begin{corollary}\label{cor:current}
+Let $\Lambda_m$ be the largest value of $1/|I|$ over the nonzero branch currents $I$ of planar networks of $m$ unit
+resistors, with a unit current fed through two terminals on a common face, and let $c=\lim\Lambda_m^{1/m}$ be the
+growth constant studied in \cite{M2}. Then $1.7194145\le c\le\tht=1.8371173\ldots$
+\end{corollary}
+\noindent Indeed, under a unit current feed every nonzero branch current of a network $G$ has the form $N/\tau(G)$
+with an integer $N\ne0$ (Kirchhoff), so its reciprocal is at most $\tau(G)<\tht^{\,m}$; the lower bound is
+from~\cite{M2}. This replaces the upper bound $1.8393$ used there.
+
+\subsection*{Method, and what is new}
+The proof has three parts.
+\begin{enumerate}
+\item \emph{Comparison with the universal cover.} Return probabilities of the random walk on $G$ dominate those on
+  its universal cover $T$, which gives $\log\tau(G)\le\Phi(G)+O(1)$, where $\Phi(G)$ is the tree entropy of $T$ per
+  fundamental domain. This is the method of McKay \cite{McKay} and Lyons \cite{Lyons}.
+\item \emph{A closed formula.} $\Phi(G)=\sum_e\log(1+r_e)-\sum_v\log x_v$, where the positive numbers $x_v$ and
+  $r_e$, defined in Section~\ref{sec:cover} from hitting probabilities on $T$, satisfy $r_e(1+r_e)=x_ux_v$ and
+  $\sum_{e\ni v}r_e=d_vx_v-1$. This is known: it is the Floquet formula of
+  Banks, Breuer, Garza-Vargas, Seelig and Simon \cite{BBGSS} at energy $0$, and the system is the covariance system
+  of Gaussian belief propagation, see Watanabe \cite{Watanabe}. We include a short proof.
+\item \emph{An edge inequality.} We show $\Phi(G)\le mL$ with equality exactly for $4$-regular graphs. A
+  multiplier $\tfrac18$ on the edge equations makes the vertex terms concave, and Jensen's inequality reduces
+  everything to the one-variable functions
+  $f_d(r)=\tfrac9{16}\log(1+r)+\tfrac1{16}\log r-(\tfrac1d+\tfrac18)\log(r+\tfrac1d)$, whose derivative has the sign
+  of $(8r-1)((d-2)r-1)$ and whose value at $d=4$, $r=\tfrac18$ is exactly $\tfrac14\log\tfrac{27}{8}$.
+\end{enumerate}
+Parts 1 and 2 are not new. As far as we could determine, part~3 and Theorem~\ref{thm:main} are. The literature
+search and its limits are described in Section~\ref{sec:lit}; we make no claim beyond it.
+
+\subsection*{Status of verification}
+The proof is elementary but has several steps, and it was produced by AI agents under the author's direction (see
+the end of the paper). We therefore state exactly what has been checked and how.
+\begin{itemize}
+\item \emph{Formal verification of the key inequality (Lean~4 with Mathlib).} Sections \ref{sec:cover} and
+  \ref{sec:edge} are formalised as statements about real numbers. Lean checks the following: let $h$ be a positive
+  function on the darts of a finite multigraph with minimum degree at least $2$ and no edge between two vertices of
+  degree $2$; if $h$ satisfies the first-step equation \eqref{eq:h} and is the pointwise limit of functions
+  $h^{(t)}$ with $h^{(0)}=0$ that satisfy the inequality stated after \eqref{eq:h}, then
+  $\sum_v\log\bigl(d_v-\sum_{u\sim v}h_{u\to v}\bigr)-\sum_e\log(1-q_e)\le m\cdot\frac12\log\frac{27}{8}$; the left
+  side equals $\sum_e\log(1+r_e)-\sum_v\log x_v$. This covers the bounds of Lemma~\ref{lem:apriori}, the
+  identities \eqref{eq:I}, the bounds on $\rb_v$ in Lemma~\ref{lem:ranges}, Lemma~\ref{lem:onevar} and the
+  inequality $E_e\le L$ of Lemma~\ref{lem:edge}. In place of the decimal values of Lemma~\ref{lem:num} and of
+  Case~C, Lean uses exact inequalities between natural numbers for degrees $2$ to $119$, evaluated by its kernel,
+  and a direct estimate for larger degrees. The proof contains no \code{sorry} and uses only the three standard
+  axioms of Lean and Mathlib, and an explicit example shows that equality can occur.
+  \emph{Not formalised:} that hitting probabilities on the universal cover satisfy these first-step relations, the
+  closed formula (Lemma~\ref{lem:formula}), Lemmas \ref{lem:mtt} and \ref{lem:compare}, the reductions of
+  Section~\ref{sec:red}, the amplification of Section~\ref{sec:proof} and the equality statement of
+  Remark~\ref{rem:eq}. Theorem~\ref{thm:main} itself is therefore not machine-checked.
+\item \emph{Interval arithmetic.} Independently of Lean, the numerical facts of Lemma~\ref{lem:num} and the
+  constants of Case~C of Lemma~\ref{lem:edge} are certified with $60$-digit interval arithmetic at explicit rational
+  points (Appendix~\ref{app:num}).
+\item \emph{Recomputation by separate agents.} Separate AI agents of the same project re-derived each step of the
+  proof and of this text and recomputed the numerical claims with their own code.
+\item \emph{Exhaustive check.} Theorem~\ref{thm:main} was confirmed directly, in exact integer arithmetic, for all
+  $8{,}350{,}006$ connected loopless multigraphs with at most $14$ edges that are not trees (for a tree $\tau=1$).
+  This is a sanity check far from the sharp regime.
+\end{itemize}
+What has not been done: no external expert has reviewed this paper. We welcome corrections.
+
+\section{Reductions}\label{sec:red}
+
+We prove $\tau(G)\le\tht^{\,m}$ for all $m\ge0$ by induction on $m$. This implies Theorem~\ref{thm:main}, because
+for $m\ge1$ the number $(27/8)^{m/2}$ is not an integer (for even $m$ it is a non-integral rational, for odd $m$
+it is irrational). The case $m=0$ is trivial, and disconnected graphs have $\tau=0$. Let $G$ be connected with
+$m\ge1$ edges, assume the claim for fewer edges, and apply the first of the following cases that fits.
+
+\begin{itemize}
+\item[(R1)] $G$ has a loop. Deleting it keeps $\tau$ and lowers $m$.
+\item[(R2)] $G$ has a vertex of degree $1$. Deleting it keeps $\tau$ and lowers $m$.
+\item[(R3)] $G$ is a cycle with $k\ge2$ edges. Then $\tau=k\le\tht^{\,k}$.
+\item[(R4)] $G$ has two adjacent vertices $x,y$ of degree $2$. Let $W$ be the maximal chain through the edge $xy$
+  all of whose interior vertices have degree $2$. Since (R1)--(R3) do not apply, $W$ has $k\ge3$ edges and its end
+  vertices $u,v$ have degree at least $3$.
+  If $u=v$, then $W$ is a cycle attached at $u$; deleting its interior vertices leaves a graph $G''$ with $m-k$
+  edges and $\tau(G)=k\,\tau(G'')\le k\,\tht^{\,m-k}\le\tht^{\,m}$.
+  If $u\ne v$, let $G'$ be $G$ with $W$ replaced by a single edge $e=uv$, so $m(G')=m-k+1$. A spanning tree of $G$
+  contains all of $W$, or all edges of $W$ but one; this gives
+  $\tau(G)=\tau_e(G')+k\,\tau_{\bar e}(G')\le k\,\tau(G')$, where $\tau_e$ and $\tau_{\bar e}$ count the spanning trees
+  of $G'$ with and without $e$. Hence $\tau(G)\le k\,\tht^{\,m-k+1}\le\tht^{\,m}$, because $k\le\tht^{\,k-1}$ for
+  $k\ge3$ (indeed $3\le27/8$ and $(k+1)/k\le4/3<\tht$).
+\item[(R5)] Otherwise $G$ belongs to the class $\cC$ of \emph{connected loopless multigraphs with at least one
+  edge, minimum degree at least $2$, and no two adjacent vertices of degree $2$.}
+\end{itemize}
+Note that $k=2$ would fail in (R4), since $2>\tht$: a vertex of degree $2$ without a neighbour of degree $2$
+cannot be removed, and such vertices stay in $\cC$. Every $G\in\cC$ has a vertex of degree at least $3$, and gluing two members of $\cC$ at a vertex gives a
+member of $\cC$. The rest of the paper proves $\tau(G)\le\tht^{\,m}$ for $G\in\cC$.
+
+\section{The universal cover}\label{sec:cover}
+
+Let $G\in\cC$ with vertex degrees $d_v$, let $T$ be its universal cover and consider simple random walk on the
+tree $T$. A \emph{dart} is an edge with a direction, written $u\to v$. For adjacent vertices $u,v$ of $T$ let
+$h_{u\to v}$ be the probability that the walk started at $u$ ever visits $v$. All quantities below are invariant under deck transformations and are regarded as functions of
+the darts, vertices and edges of $G$. Conditioning on the first step, and using that in a tree a walk from a
+neighbour $w\ne v$ of $u$ must return to $u$ before reaching $v$,
+\begin{equation}\label{eq:h}
+ h_{u\to v}=\frac1{d_u}\Bigl(1+\sum_{w\sim u,\,w\ne v}h_{w\to u}\,h_{u\to v}\Bigr),\qquad\text{i.e.}\qquad
+ h_{u\to v}=\frac1{d_u-\sum_{w\ne v}h_{w\to u}} .
+\end{equation}
+The sum is over the $d_u-1$ other darts into $u$. For the probabilities $h^{(t)}$ of a visit within $t$ steps the
+same argument gives the inequality
+$h^{(t+1)}_{u\to v}\le\frac1{d_u}\bigl(1+\sum_{w\ne v}h^{(t)}_{w\to u}h^{(t+1)}_{u\to v}\bigr)$.
+
+\begin{lemma}\label{lem:apriori}
+For $G\in\cC$: $h_{w\to u}\le\frac34$ if $d_w=2$, and $h_{u\to v}\le\frac4{d_u+3}\le\frac23$ if $d_u\ge3$. In
+particular the walk on $T$ is transient.
+\end{lemma}
+\begin{proof}
+Induction on $t$ for $h^{(t)}$, with $h^{(0)}=0$, carrying both bounds for all darts. If $d_w=2$, the other
+neighbour of $w$ has degree at least $3$, so the incoming value is at most $\frac23$ and
+$h^{(t+1)}_{w\to u}\le1/(2-\frac23)=\frac34$. If $d_u=d\ge3$, all incoming values are at most $\frac34$, so
+$h^{(t+1)}_{u\to v}\le1/(d-\frac34(d-1))=\frac4{d+3}$. Let $t\to\infty$.
+\end{proof}
+
+For a vertex $v$ and an edge $e=uv$ put
+\[
+ x_v:=\frac1{d_v-\sum_{u\sim v}h_{u\to v}},\qquad q_e:=h_{u\to v}h_{v\to u}\in(0,1),\qquad
+ r_e:=\frac{q_e}{1-q_e}>0,\qquad \rb_v:=\frac1{d_v}\sum_{e\ni v}r_e .
+\]
+Thus $d_vx_v$ is the Green function $\sum_kp_k(v,v)$ of the walk on $T$, where $p_k(v,v)$ denotes the $k$-step
+return probability.
+
+\begin{lemma}\label{lem:ident}
+For every edge $e=uv$ and every vertex $v$,
+\begin{equation}\label{eq:I}
+ r_e(1+r_e)=x_ux_v,\qquad\qquad \sum_{e\ni v}r_e=d_vx_v-1,\ \text{ i.e. }\ \rb_v=x_v-\tfrac1{d_v}.
+\end{equation}
+\end{lemma}
+\begin{proof}
+By \eqref{eq:h}, $1/h_{v\to u}=1/x_v+h_{u\to v}$, hence $h_{v\to u}=(1-q_e)x_v$ and likewise
+$h_{u\to v}=(1-q_e)x_u$. Multiplying gives $q_e=(1-q_e)^2x_ux_v$, the first identity. For the second,
+$d_vx_v-1=x_v\sum_{u\sim v}h_{u\to v}=\sum_{e\ni v}(1-q_e)x_ux_v=\sum_{e\ni v}r_e$.
+\end{proof}
+
+\begin{lemma}\label{lem:ranges}
+Let $G\in\cC$ and let $v$ be a vertex of degree $d$.
+\begin{itemize}
+\item[(a)] If $d=2$, then $0<\rb_v\le1$ and $x_v\le\frac32$.
+\item[(b)] If $d\ge3$, then $r_e\le\frac3d$ for every edge at $v$; hence $0<\rb_v\le\frac3d$ and $x_v\le\frac4d$.
+\item[(c)] If $d\ge3$ and $v$ has a neighbour of degree at least $3$, then
+ $\rb_v\le R^*_d:=\dfrac{9d-1}{d(3d+1)}$.
+\end{itemize}
+\end{lemma}
+\begin{proof}
+(a) Both neighbours have degree at least $3$, so $x_v\le1/(2-\frac43)=\frac32$ and $\rb_v=x_v-\frac12\le1$.
+(b) By Lemma~\ref{lem:apriori}, $q_e\le\frac34\cdot\frac4{d+3}=\frac3{d+3}$, so $r_e\le\frac3d$.
+(c) One of the darts into $v$ starts at a vertex of degree at least $3$ and is at most $\frac23$; the others are at
+most $\frac34$. Hence $\sum_{u\sim v}h_{u\to v}\le\frac34(d-1)+\frac23=\frac34d-\frac1{12}$, so
+$x_v\le\frac{12}{3d+1}$ and $\rb_v=x_v-\frac1d\le\frac{9d-1}{d(3d+1)}$.
+\end{proof}
+For $d=3$ the bounds of Lemmas \ref{lem:apriori} and \ref{lem:ranges}(a),(b) are attained by the cover of the theta
+graph with each edge subdivided once. The refinement (c) is needed only for $d=5$.
+
+\section{A closed formula for the tree entropy of the cover}\label{sec:formula}
+
+Define
+\[
+ \Phi(G):=\sum_{v\in V(G)}\Bigl(\log d_v-\sum_{k\ge1}\frac{p_k(v,v)}{k}\Bigr).
+\]
+By \cite{Lyons}, $\Phi(G)/|V(G)|$ is the limit of $\log\tau$ per vertex along finite connected graphs of bounded
+degree whose random weak limit is $T$ rooted at the lift of a uniform vertex of $G$; we do not use this.
+
+\begin{lemma}[known; see \cite{BBGSS,Watanabe}]\label{lem:formula}
+$\displaystyle\Phi(G)=\sum_{e\in E(G)}\log(1+r_e)-\sum_{v\in V(G)}\log x_v$.
+\end{lemma}
+\begin{proof}
+For $z\in[0,1]$ let $h_{u\to v}(z)$ be the generating function of the first hitting time of $v$ from $u$. As in
+\eqref{eq:h}, $h_{u\to v}(z)=z/(d_u-z\sum_{w\ne v}h_{w\to u}(z))$. Put $P_v(z):=d_v-z\sum_{u\sim v}h_{u\to v}(z)$ and
+$q_e(z):=h_{u\to v}(z)h_{v\to u}(z)$. Then $\cG_v(z):=\sum_kp_k(v,v)z^k=d_v/P_v(z)$, and the recursion gives, for
+$z>0$,
+\begin{equation}\label{eq:star}
+ P_v(z)=z\,\frac{1-q_e(z)}{h_{v\to u}(z)}\qquad\text{for every edge }e=uv .
+\end{equation}
+Let $\Xi(z):=\sum_v\log P_v(z)-\sum_e\log(1-q_e(z))$. In $\Xi'(z)$ the coefficient of $h'_{u\to v}(z)$ is
+$-z/P_v(z)+h_{v\to u}(z)/(1-q_e(z))$, which vanishes by \eqref{eq:star}. Therefore
+\[
+ \Xi'(z)=-\sum_v\frac{\sum_{u\sim v}h_{u\to v}(z)}{P_v(z)}=-\sum_v\frac{\cG_v(z)-1}{z}.
+\]
+By the paragraph ``Uniform decay'' in the proof of Lemma~\ref{lem:compare}, which uses only the first-step
+inequality, all $h_{u\to v}(z)$ are analytic for $|z|<\frac{101}{100}$, and $P_v(z)>0$, $q_e(z)<1$ on $[0,1]$; so
+$\Xi$ is analytic on $[0,1]$. Moreover $\Xi(0)=\sum_v\log d_v$. Integrating, $\Xi(1)=\sum_v\log d_v-\sum_v\int_0^1(\cG_v(z)-1)\,dz/z=\Phi(G)$. Finally
+$P_v(1)=1/x_v$ and $1/(1-q_e)=1+r_e$.
+\end{proof}
+
+\section{Comparison of a graph with its cover}\label{sec:compare}
+
+\begin{lemma}\label{lem:mtt}
+Let $G$ be a connected loopless multigraph with $n\ge2$ vertices, adjacency matrix $A$ and diagonal degree
+matrix $\Delta$, and let $1=\lambda_1>\lambda_2\ge\dots\ge\lambda_n\ge-1$ be the eigenvalues of the walk matrix
+$M=\Delta^{-1}A$. Then
+$\tau(G)=\dfrac{\prod_vd_v}{2m}\prod_{i\ge2}(1-\lambda_i)$.
+\end{lemma}
+\begin{proof}
+The symmetric matrix $\mathcal L=I-\Delta^{-1/2}A\Delta^{-1/2}$ has eigenvalues $1-\lambda_i$ and a one-dimensional kernel
+spanned by the unit vector $\varphi_v=\sqrt{d_v/2m}$, so its adjugate is $\prod_{i\ge2}(1-\lambda_i)\,\varphi\varphi^{\mathsf T}$.
+The $(v,v)$ entry of the adjugate is the corresponding principal minor of $\mathcal L$, which equals the minor of
+the Laplacian $\Delta-A$, namely $\tau(G)$ by the matrix-tree theorem, divided by $\prod_{u\ne v}d_u$.
+\end{proof}
+
+\begin{lemma}\label{lem:compare}
+There is an absolute constant $C_1$ such that $\log\tau(G)\le\Phi(G)+C_1$ for every $G\in\cC$.
+\end{lemma}
+\begin{proof}
+For $\lambda\in[-1,1)$ and $K\ge1$ we have $\log(1-\lambda)\le-\sum_{k\le K}\lambda^k/k+\frac1{K+1}$: for
+$\lambda\ge0$ the omitted terms are non-positive, and for $\lambda<0$ the tail is an alternating series with
+decreasing terms. Summing over $i\ge2$ in Lemma~\ref{lem:mtt}, with $\sum_{i\ge2}\lambda_i^k=\tr M^k-1$,
+\[
+ \log\tau(G)\le\sum_v\log d_v-\log 2m-\sum_{k\le K}\frac{\tr M^k-1}{k}+\frac{n-1}{K+1}.
+\]
+Now $\tr M^k=\sum_vp^G_k(v,v)\ge\sum_vp_k(v,v)$, because a walk on $T$ that returns to its starting point projects
+to a walk on $G$ that returns. Hence
+\begin{equation}\label{eq:cmp}
+ \log\tau(G)\le\Phi(G)+\sum_v\sum_{k>K}\frac{p_k(v,v)}{k}+(1+\log K)+\frac{n-1}{K+1}-\log 2m .
+\end{equation}
+\emph{Uniform decay.} Let $z_0=\frac{101}{100}$, $\alpha=\frac{77}{100}$, $\beta=\frac{83}{100}$. Then
+$\alpha\le\beta$, $\beta\ge z_0/(2-z_0\alpha)$, $\alpha\ge z_0/(3-2z_0\beta)$ and $z_0\beta<1$ (exact rational
+arithmetic). The induction of Lemma~\ref{lem:apriori}, applied to the truncated expectations
+$E_u[z_0^{\,\sigma};\sigma\le t]$ of the hitting time $\sigma$ of $v$ (finite sums, for which the first-step
+inequality holds, with positive denominators because $z_0\beta<1$), gives $h_{w\to u}(z_0)\le\beta$ if $d_w=2$ and
+$h_{u\to v}(z_0)\le\alpha$ if $d_u\ge3$; here all incoming values are at most $\beta$, and
+$z_0/(d-(d-1)z_0\beta)$ is largest at $d=3$. Consequently the first-return generating function satisfies
+$\frac{z_0}{d_v}\sum_uh_{u\to v}(z_0)\le z_0\beta<1$, so $\cG_v(z_0)\le1/(1-z_0\beta)<7$ and
+$p_k(v,v)\le7\,(100/101)^k$ for all $k$ and all $v$, uniformly over $\cC$.
+
+Take $K=1000\,n$ in \eqref{eq:cmp}. The double sum is less than $1$, $(n-1)/(K+1)<1$, and
+$\log K-\log 2m\le\log 500$ because $n\le m$ in $\cC$. So $C_1=3+\log 500$ works.
+\end{proof}
+
+\begin{remark}
+The inequality $\tau(G)\le e^{\Phi(G)}$ is false in general: for the theta graph with each edge subdivided once,
+$\tau=12$ and $\log\tau-\Phi=0.1178$. The additive constant is removed in Section~\ref{sec:proof} by an
+amplification argument.
+\end{remark}
+
+\section{The edge inequality}\label{sec:edge}
+
+Let $g(r):=\frac9{16}\log(1+r)+\frac1{16}\log r$ for $r>0$; $g$ is concave and increasing. For an edge $e=uv$ with
+$a=d_u$, $b=d_v$ define
+\[
+ E_e:=\log(1+r_e)-\tfrac1a\log x_u-\tfrac1b\log x_v-g'(\rb_u)(r_e-\rb_u)-g'(\rb_v)(r_e-\rb_v).
+\]
+
+\begin{lemma}\label{lem:sum}
+\textup{(a)} $\sum_{e}E_e=\Phi(G)$. \quad\textup{(b)} $E_e\le f_a(\rb_u)+f_b(\rb_v)$, where
+\[
+ f_d(r):=g(r)-\bigl(\tfrac1d+\tfrac18\bigr)\log\bigl(r+\tfrac1d\bigr).
+\]
+\end{lemma}
+\begin{proof}
+(a) Summing over the edges at a fixed vertex $v$, the terms $g'(\rb_v)(r_e-\rb_v)$ cancel by the definition of
+$\rb_v$, and $\sum_e(\frac1a\log x_u+\frac1b\log x_v)=\sum_v\log x_v$; use Lemma~\ref{lem:formula}.
+(b) By \eqref{eq:I}, $\log(1+r_e)=2g(r_e)-\frac18(\log x_u+\log x_v)$. So $E_e$ is the sum over the two ends
+$w\in\{u,v\}$ of $g(r_e)-g'(\rb_w)(r_e-\rb_w)-(\frac1{d_w}+\frac18)\log x_w$. By concavity,
+$g(r_e)-g'(\rb_w)(r_e-\rb_w)\le g(\rb_w)$, and $x_w=\rb_w+\frac1{d_w}$.
+\end{proof}
+
+\begin{lemma}\label{lem:onevar}
+For $d\ge2$ and $r>0$, $f_d'(r)$ has the sign of $Q_d(r):=(8r-1)\bigl((d-2)r-1\bigr)$. Hence $f_2$ increases on
+$(0,\frac18]$ and decreases afterwards; for $d\ge3$, $f_d$ increases up to $\min(\frac18,\frac1{d-2})$, decreases
+up to $\max(\frac18,\frac1{d-2})$ and increases afterwards. Moreover
+\begin{equation}\label{eq:exact}
+ f_4(\tfrac18)=\tfrac14\log\tfrac{27}{8}=\tfrac L2 .
+\end{equation}
+\end{lemma}
+\begin{proof}
+$f_d'(r)=\frac{10r+1}{16r(1+r)}-\frac{d+8}{8(dr+1)}$, and
+$(10r+1)(dr+1)-2(d+8)r(1+r)=(8d-16)r^2-(d+6)r+1=Q_d(r)$. For \eqref{eq:exact}:
+$\frac9{16}\log\frac98+\frac1{16}\log\frac18-\frac38\log\frac38=\frac34\log3-\frac34\log2$.
+\end{proof}
+
+By Lemma~\ref{lem:onevar} the maximum of $f_d$ over an interval $(0,R]$ is attained at $R$ or at the first
+critical point $\rho_d$ (if $\rho_d\le R$), where $\rho_2=\frac18$ and $\rho_d=\min(\frac18,\frac1{d-2})$ for
+$d\ge3$. With the ranges of Lemma~\ref{lem:ranges} put
+\[
+ F_2:=\max_{(0,1]}f_2,\qquad F_d:=\max_{(0,3/d]}f_d,\qquad F^*_d:=\max_{(0,R^*_d]}f_d\qquad(d\ge3).
+\]
+All candidate points are rational, so these are explicit combinations of logarithms of rational numbers.
+
+\begin{lemma}[numerical facts]\label{lem:num}
+\textup{(a)} $F^*_4=\frac L2$, attained only at $r=\frac18$, and $F^*_d<\frac L2-0.0014$ for $3\le d\le119$, $d\ne4$.
+\textup{(b)} $F_2<0.230041$ and $F_d<0.304973$ for $3\le d\le119$.
+\end{lemma}
+\noindent Some values: $F_2=0.230040$, $F^*_3=0.293861$, $F^*_4=0.304099$, $F^*_5=0.302650$, $F^*_6=0.300921$,
+$F^*_7=0.295802$, $\max_dF_d=F_5=0.304972$; see Appendix~\ref{app:num} for how they are certified.
+
+\begin{lemma}\label{lem:edge}
+For every edge $e$ of every $G\in\cC$, $E_e\le L$. Consequently $\Phi(G)\le mL$.
+\end{lemma}
+\begin{proof}
+Let $a=d_u\le b=d_v$.
+
+\emph{Case A: $3\le a\le b\le119$.} Each end has a neighbour of degree at least $3$, namely the other end. By
+Lemmas \ref{lem:sum}(b), \ref{lem:ranges}(c) and \ref{lem:num}(a), $E_e\le F^*_a+F^*_b\le L$.
+
+\emph{Case B: $a=2$ and $b\le119$.} Then $b\ge3$, and $E_e\le F_2+F_b<0.230041+0.304973<L$.
+
+\emph{Case C: $b\ge120$.} Dropping the non-positive terms $-g'(\rb_w)r_e$ in the definition of $E_e$,
+\[
+ E_e\le\log(1+r_e)+H_a(\rb_u)+H_b(\rb_v),\qquad H_d(s):=-\tfrac1d\log\bigl(\tfrac1d+s\bigr)+\tfrac9{16}\,\frac{s}{1+s}+\tfrac1{16},
+\]
+since $s\,g'(s)=\frac9{16}\frac s{1+s}+\frac1{16}$. For $d\ge120$ and $0<s\le\frac3d$ we have
+$H_d(s)\le\frac{\log d}{d}+\frac{27}{16(d+3)}+\frac1{16}$, which decreases in $d$ and is less than $0.116116$ at $d=120$. For $2\le d\le119$, $H_d'$ has the sign of
+$-16s^2+(9d-32)s-7$: if $d\le5$ this is negative; if $d\ge6$ its larger root exceeds $\frac3d$, so on the range of
+Lemma~\ref{lem:ranges} $H_d$ decreases and then possibly increases. Hence $\sup H_d$ is the larger of
+$H_d(0^+)=\frac{\log d}d+\frac1{16}$ and the value at the right end of the range, and both are at most
+$\frac{\log3}{3}+\frac1{16}<0.428705$ (Appendix~\ref{app:num}). Finally $r_e\le x_ux_v\le\frac32\cdot\frac4{120}=\frac1{20}$
+by \eqref{eq:I} and Lemma~\ref{lem:ranges}. Altogether $E_e<0.048791+0.428705+0.116116<L=0.608197\ldots$
+
+The last assertion follows from Lemma~\ref{lem:sum}(a).
+\end{proof}
+
+\begin{remark}\label{rem:eq}
+Equality $E_e=L$ forces $a=b=4$ and $\rb_u=\rb_v=r_e=\frac18$, the values of the $4$-regular tree; so
+$\Phi(G)=mL$ if and only if $G$ is $4$-regular. The margin in Case~A is $0.00145$, attained at $d=5$.
+\end{remark}
+
+\section{Proofs of the main results}\label{sec:proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+By Section~\ref{sec:red} it suffices to show $\tau(G)\le\tht^{\,m}$ for $G\in\cC$. Let $G_N$ be the graph obtained
+from $N$ disjoint copies of $G$ by identifying one fixed vertex of all copies. Then $G_N\in\cC$,
+$m(G_N)=Nm$, and $\tau(G_N)=\tau(G)^N$ because the number of spanning trees is multiplicative over blocks.
+Lemmas \ref{lem:compare} and \ref{lem:edge}, applied to $G_N$, give $N\log\tau(G)\le NmL+C_1$ with $C_1$ independent
+of $N$. Dividing by $N$ and letting $N\to\infty$ gives $\log\tau(G)\le mL$.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~\ref{prop:sharp}]
+By \cite{Lyons} (Theorem~3.3 and Example~3.16 in the arXiv version; see also \cite{McKay,ChungYau}),
+$|V(G_j)|^{-1}\log\tau(G_j)\to3\log\frac32=\log\frac{27}8$
+for connected $4$-regular graphs $G_j$ whose girth tends to infinity; such graphs exist, and $m(G_j)=2|V(G_j)|$.
+\end{proof}
+
+Corollaries \ref{cor:sup}, \ref{cor:planar} and \ref{cor:current} were derived in the introduction; in
+Corollary~\ref{cor:sup} the supremum is not attained because the inequality of Theorem~\ref{thm:main} is strict.
+
+\section{Literature}\label{sec:lit}
+
+We searched for earlier statements of Theorem~\ref{thm:main} and found none. The search covered the papers cited
+here and the papers citing \cite{Kenyon}, \cite{Stoimenow} and \cite{CKP} that are indexed in OpenAlex, as well as
+arXiv and the OEIS. It was limited to open sources: we could not consult MathOverflow, Google Scholar or
+publishers' sites. In particular we did not have access to \cite{Stoimenow}, \cite{McKay}, \cite{ChungYau},
+\cite{Grimmett}, \cite{Kostochka} or the journal version of \cite{Kenyon}; what we say about them is taken from
+\cite{CKP,GJKLZ} (Stoimenow), from \cite{GIKM,Lyons} (McKay, Chung--Yau, Kostochka), from \cite{ShrockWu}
+(Grimmett) and from the arXiv version of \cite{Kenyon}. We therefore state plainly that the result may be known to
+specialists, and we would be grateful for references.
+
+What we found. For regular graphs the sharp constant is McKay's \cite{McKay} (see \cite{GIKM} for the statement
+and \cite{ChungYau} for sharpness); for simple regular graphs the exponential rate $\tht$ already follows from it,
+since the per-edge constants $1.7472$, $1.8371$, $1.8098$, $1.7571$ for $d=3,4,5,6$ are largest at $d=4$ (and they
+decrease for $d\ge4$). For general
+degree sequences we only found the bounds of Grimmett \cite{Grimmett} and Kostochka \cite{Kostochka}, whose
+exponential rates per edge, $e^{2/e}=2.087$ and $3^{2/3}=2.080$, exceed $2$, and the unpublished bound of Young
+mentioned by Kenyon. Lyons \cite{Lyons} shows that among transitive graphs
+of a fixed degree the regular tree maximises tree entropy per vertex; we found nothing per edge or for irregular
+covers. For planar graphs, see the introduction; recent work \cite{Burton,CK25} still treats the planar upper
+bound as a conjecture. The formula of Lemma~\ref{lem:formula} is in \cite{BBGSS}, and the system \eqref{eq:I}
+is the covariance system (2.5) of \cite{Watanabe} (with unit weights, at energy $0$).
+
+\section{Questions}
+
+\textup{(1)} Kenyon's first question: which graphs with $m$ edges maximise $\tau$? By exhaustive computation the
+maximum of $\tau^{1/m}$ over connected multigraphs with at most $14$ edges is $1.667031$ ($\tau=1280$, $m=14$), far
+from $\tht$: small graphs are not close to extremal.
+\textup{(2)} The planar supremum. Since $\tht$ is exact for general graphs, a planar improvement must use faces,
+that is, short cycles of the graph and of its dual. \textup{(3)} Is $\tau(G)\le\tht^{\,m}$ true with a
+polynomial saving in $m$, as in McKay's bound for regular graphs?
+
+\appendix
+\section{Computer-assisted parts and verification package}\label{app:num}
+
+The proof uses computation in one place only: the finitely many inequalities of Lemma~\ref{lem:num} and the three
+constants of Case~C. The package accompanying this paper (\url{https://github.com/kosza123/flow-certificate-thresholds}, directory \code{spanning-trees-per-edge}, and the Zenodo record of this paper) contains the following.
+\begin{itemize}
+\item \code{verify/certify\_intervals.py}: evaluates $f_d$ at the rational candidate points for $2\le d\le119$ with
+  $60$-digit interval arithmetic (\code{mpmath.iv}) and checks Lemma~\ref{lem:num}, the constants of Case~C, the
+  inequality $k\le\tht^{\,k-1}$ in exact integers, and the constants $z_0,\alpha,\beta$ as exact rationals.
+  
+\item \begin{sloppypar}\code{lean/}: the Lean~4 package \code{TreeEntropy} (Lean 4.37.0-rc1, Mathlib commit
+  \code{53dad9ed}; about $1600$ lines in eight modules), described in the paragraph on the status of
+  verification. Its main statements are the theorems \code{tree\_entropy\_bound} (the edge inequality from the
+  identities \eqref{eq:I} and the ranges) and \code{tree\_entropy\_bound\_of\_first\_step} (the same conclusion
+  from the first-step relations) in the namespace \code{TreeEntropy}. The script \code{scripts/check.sh} builds the
+  package, scans for placeholders, prints the axioms of $44$ theorems, runs positive and negative controls and
+  replays every module in the kernel checker; a recorded clean-room run is included
+  (\code{VERIFICATION\_CLEANROOM.txt}). The formal proof of Case~C does not use the sign analysis of $H_d'$ given
+  in Section~\ref{sec:edge} and is in this sense independent of it.\end{sloppypar}
+\item \code{verify/check\_class.py}: for random multigraphs of $\cC$ (including vertices of degree $2$) it solves
+  \eqref{eq:h}, checks \eqref{eq:I}, the ranges of Lemma~\ref{lem:ranges}, the closed formula of
+  Lemma~\ref{lem:formula} against a numerical integration of the return generating function, and
+  $E_e\le L$. This is a consistency check, not part of the proof.
+\item \code{verify/exhaustive.py}: checks $\tau(G)^2\,8^m<27^m$ in exact integer arithmetic for all connected
+  loopless multigraphs with at most a given number of edges that are not trees (for a tree $\tau=1$), generated
+  with \code{nauty} \cite{nauty}. Up to $14$ edges these are $8{,}350{,}006$ graphs, and there is no violation. This
+  is a sanity check far from the sharp regime.
+\end{itemize}
+
+\section*{Author contributions and use of AI}
+This work was carried out with substantial assistance from AI systems working under the author's direction. The
+SAPIO MORPHEUS project uses models from OpenAI and Anthropic.
+\begin{itemize}
+\item The statement, the proof, the computations, the literature comparison and this manuscript were produced by AI
+  agents based on Anthropic's Claude.
+\item Separate AI agents of the same project, working with their own code, refereed the proof and then this text
+  line by line and recomputed the numerical claims, including the exhaustive computation; another such agent
+  carried out the literature search.
+  
+\item The Lean formalisation was written by a further AI agent based on Anthropic's Claude.
+\item The author selected the direction, directed the work and made the publication decisions, and takes
+  responsibility for the content.
+\end{itemize}
+In line with common publication policies, AI systems are not listed as authors. No external expert has reviewed
+this manuscript at the time of writing.
+
+\begin{thebibliography}{99}
+\bibitem{BBGSS} J.~Banks, J.~Breuer, J.~Garza-Vargas, E.~Seelig, B.~Simon, \emph{A useful formula for periodic
+  Jacobi matrices on trees}, Proc.\ Natl.\ Acad.\ Sci.\ USA \textbf{121} (2024), no.~23, e2315218121; arXiv:2309.00437.
+\bibitem{Burton} S.~D.~Burton, \emph{The spectra of volume and determinant densities of links}, Topology Appl.\
+  \textbf{211} (2016), 38--55; arXiv:1507.01954.
+\bibitem{CK25} A.~Champanerkar, I.~Kofman, \emph{Geometric bounds for spanning tree entropy of planar lattice
+  graphs}, arXiv:2505.05688 (2025).
+\bibitem{CKP} A.~Champanerkar, I.~Kofman, J.~S.~Purcell, \emph{Geometrically and diagrammatically maximal knots},
+  J.\ London Math.\ Soc.\ (2) \textbf{94} (2016), 883--908; arXiv:1411.7915v4.
+\bibitem{ChungYau} F.~Chung, S.-T.~Yau, \emph{Coverings, heat kernels and spanning trees}, Electron.\ J.\ Combin.\
+  \textbf{6} (1999), Research Paper~12.
+\bibitem{Fomin} D.~Fomin, \emph{Elementary proof for the bounds of the complexity of a planar multigraph and the
+  size of a prime rectangular squaring}, arXiv:2103.10523 (2021).
+\bibitem{GJKLZ} J.~Ge, X.~Jin, L.~H.~Kauffman, P.~Lopes, L.~Zhang, \emph{Minimal sufficient sets of colors and
+  minimum number of colors}, J.\ Knot Theory Ramifications \textbf{26} (2017), no.~9, 1743008; arXiv:1501.02421.
+\bibitem{GIKM} C.~Greenhill, M.~Isaev, M.~Kwan, B.~D.~McKay, \emph{The average number of spanning trees in sparse
+  graphs with given degrees}, European J.\ Combin.\ \textbf{63} (2017), 6--25; arXiv:1606.01586.
+\bibitem{Grimmett} G.~R.~Grimmett, \emph{An upper bound for the number of spanning trees of a graph}, Discrete
+  Math.\ \textbf{16} (1976), 323--324.
+\bibitem{Kenyon} R.~Kenyon, \emph{Tiling a rectangle with the fewest squares}, J.\ Combin.\ Theory Ser.\ A
+  \textbf{76} (1996), 272--291; arXiv:math/9411215.
+\bibitem{Kostochka} A.~V.~Kostochka, \emph{The number of spanning trees in graphs with a given degree sequence},
+  Random Structures Algorithms \textbf{6} (1995), 269--274.
+\bibitem{Lyons} R.~Lyons, \emph{Asymptotic enumeration of spanning trees}, Combin.\ Probab.\ Comput.\ \textbf{14}
+  (2005), 491--522; arXiv:math/0212165.
+\bibitem{M2} F.~Majchrzak, \emph{Two-port substitution and the growth of the smallest current in planar networks}
+  (2026), \url{https://github.com/kosza123/flow-certificate-thresholds}, directory \code{growth-constant}.
+\bibitem{McKay} B.~D.~McKay, \emph{Spanning trees in regular graphs}, European J.\ Combin.\ \textbf{4} (1983),
+  149--160.
+\bibitem{nauty} B.~D.~McKay, A.~Piperno, \emph{Practical graph isomorphism, II}, J.\ Symbolic Comput.\ \textbf{60}
+  (2014), 94--112.
+\bibitem{ShrockWu} R.~Shrock, F.~Y.~Wu, \emph{Spanning trees on graphs and lattices in $d$ dimensions}, J.\ Phys.\ A
+  \textbf{33} (2000), 3881--3902; arXiv:cond-mat/0004341.
+\bibitem{Stoimenow} A.~Stoimenow, \emph{Maximal determinant knots}, Tokyo J.\ Math.\ \textbf{30} (2007), 73--97.
+\bibitem{Watanabe} Y.~Watanabe, \emph{Gaussian belief propagation and periodic Jacobi matrices on trees: spectral
+  curve, antibound poles, and fixed points}, arXiv:2611.29381 (2026).
+\end{thebibliography}
+
+\end{document}

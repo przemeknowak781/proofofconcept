@@ -1,0 +1,91 @@
+== extracted files
+./.gitignore
+./Kenyon.lean
+./Kenyon/Amplify.lean
+./Kenyon/Bethe.lean
+./Kenyon/BetheFun.lean
+./Kenyon/Cayley.lean
+./Kenyon/Contract.lean
+./Kenyon/Count.lean
+./Kenyon/Examples.lean
+./Kenyon/Forest.lean
+./Kenyon/ForestCount.lean
+./Kenyon/Green.lean
+./Kenyon/Lap.lean
+./Kenyon/Levels.lean
+./Kenyon/LogDet.lean
+./Kenyon/Main.lean
+./Kenyon/MatrixTree.lean
+./Kenyon/MatrixTree2.lean
+./Kenyon/OneStep.lean
+./Kenyon/Regular.lean
+./Kenyon/Sanov.lean
+./Kenyon/Sharp.lean
+./Kenyon/Super.lean
+./PROOF_ROUTE.md
+./README.md
+./TreeEntropy.lean
+./TreeEntropy/APriori.lean
+./TreeEntropy/Darts.lean
+./TreeEntropy/Large.lean
+./TreeEntropy/Main.lean
+./TreeEntropy/OneVar.lean
+./TreeEntropy/Sharp.lean
+./TreeEntropy/Sum.lean
+./TreeEntropy/Table.lean
+./lake-manifest.json
+./lakefile.toml
+./lean-toolchain
+./scripts/PrintAxioms.lean
+./scripts/check.sh
+== symlinks (must be empty)
+== .lake present before run? (must say no)
+no
+== cache dir entries before run (must be 0)
+0
+== env
+Linux 6.18.44-fc-v880 x86_64
+4
+elan 4.4.0 (3cc76985a 2026-11-18)
+Lean (version 4.37.0-rc1, x86_64-unknown-linux-gnu, commit 0b77e12952ad39077d80d8bd6b66d601f225c321, Release)
+Lake version 5.0.0-src+0b77e12 (Lean version 4.37.0-rc1)
+== cache get start 06:25:29
+== cache get exit 0, 178 s, end 06:28:27
+
+Still decompressing downloaded files...
+Decompressed 9139 file(s)
+Already decompressed 9139 file(s)
+== check start 06:28:27
+== check exit 0, 246 s, end 06:32:33
+⚠ [18365/18367] Built Kenyon (2.4s)
+⚠ [18366/18367] Ran Kenyon:irArts
+Build completed successfully (18367 jobs).
+OK: build, 39 axiom reports, kernel replay of 29 modules
+== lines with the module-system hint: 0
+== other warnings/errors:
+== tracked files unchanged? (diff must be empty)
+unchanged
+== pins
+53dad9ed98be8416b6ca1111e55a03de4303231f
+== packages is a real directory?
+real
+== sizes
+7.5G	.lake/packages
+365M	.lake/build
+473M	<clean>/cache
+== axiom lists
+39
+     39 [propext, Classical.choice, Quot.sound]
+== checker on a missing module
+exit 1
+uncaught exception: Could not find any oleans for: Kenyon.NoSuchModule
+== negative control for step b: a module with a proof placeholder
+exit 1
+Kenyon/Examples.lean:62:theorem Kenyon.placeholderControl : (1 : Nat) = 2 := by sorry
+FAIL: placeholder, axiom or native_decide in the sources
+== negative control for step c: a reported theorem that uses a non-standard axiom
+exit 1
+FAIL: unexpected axiom
+== the clean copy itself is still untouched
+unchanged
+== DONE 06:33:02

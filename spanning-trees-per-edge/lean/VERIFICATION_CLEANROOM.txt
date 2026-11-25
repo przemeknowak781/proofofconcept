@@ -1,0 +1,119 @@
+CLEAN-ROOM VERIFICATION OF THE TreeEntropy PACKAGE
+==================================================
+
+Date (UTC):   2026-11-24, 14:50-14:54
+Performed by: an AI agent in a Linux container.  Nothing was published by this run.
+Result:       PASS.  Limitations are listed in section 7.
+
+1. What was verified
+--------------------
+The directory containing this file, exactly as recorded in version control (development commit
+85494d4, extracted with `git archive` into a new empty directory <clean> outside the working
+repository).  This file itself was written after the run and is the only file added since.
+
+Before the run, in the extracted copy: no `.lake` directory, no symbolic link, and
+MATHLIB_CACHE_DIR pointed to a new empty directory <clean>/cache.
+
+2. Environment
+--------------
+Linux 6.18.44 x86_64, 4 CPUs, 15 GB RAM
+elan 4.4.0
+Lean (version 4.37.0-rc1, x86_64-unknown-linux-gnu, commit 0b77e12952ad39077d80d8bd6b66d601f225c321, Release)
+Lake version 5.0.0-src+0b77e12 (Lean version 4.37.0-rc1)
+Mathlib checked out by Lake at 53dad9ed98be8416b6ca1111e55a03de4303231f
+(as pinned in lakefile.toml and lake-manifest.json)
+
+3. Commands and real outputs
+----------------------------
+$ lake exe cache get                                   exit 0, 93 s   (started 14:50:19)
+    Attempting to download 9139 file(s) from leanprover-community/mathlib4 cache at https://cache.mathlib.org/mathlib4-master
+    Decompressed 9139 file(s)
+    Already decompressed 9139 file(s)
+
+$ ./scripts/check.sh        (unchanged)                exit 0, 89 s   (started 14:51:57)
+    Build completed successfully (18321 jobs).
+    OK: build, 44 axiom reports, controls, kernel replay of 8 modules
+
+Wall time of the two commands together: 182 s.
+
+check.sh runs, in this order, and stops at the first failure:
+  a. lake build;
+  b. a scan of TreeEntropy/*.lean and TreeEntropy.lean for sorry / admit / axiom / native_decide;
+  c. scripts/PrintAxioms.lean: 44 theorems; every reported axiom must be one of
+     propext, Classical.choice, Quot.sound;
+  d. scripts/Controls.lean (must compile);
+  e. scripts/MustFail.lean (must NOT compile, and the error must say the proposition is false);
+  f. leanchecker on the 8 modules Sum, OneVar, Table, Large, Main, Darts, APriori, Sharp.
+
+4. Controls, run separately after check.sh
+------------------------------------------
+$ lake env lean scripts/PrintAxioms.lean | grep 'depends on axioms' | sort by axiom list
+     38 theorems:  [propext, Classical.choice, Quot.sound]
+      6 theorems:  [propext]          (the five finite tables and `tableA3`)
+    in particular
+    'TreeEntropy.tree_entropy_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'TreeEntropy.tree_entropy_bound_five' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'TreeEntropy.tree_entropy_bound_of_darts' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'TreeEntropy.tree_entropy_bound_of_darts'' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'TreeEntropy.tree_entropy_bound_of_first_step' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'TreeEntropy.Sharp.hyps_and_equality' depends on axioms: [propext, Classical.choice, Quot.sound]
+    'TreeEntropy.Sharp.first_step_instance' depends on axioms: [propext, Classical.choice, Quot.sound]
+
+$ lake env lean scripts/MustFail.lean                  exit 1
+    scripts/MustFail.lean:5:51: error: Tactic `decide` proved that the proposition
+      NatIneq 4 1 8 (27 ^ 4 - 1) (8 ^ 4)
+    is false
+
+$ lake env leanchecker TreeEntropy.DoesNotExist        exit 1   (the checker does fail on a bad input)
+
+5. What the run created, and what it left untouched
+---------------------------------------------------
+- .lake/packages  7.5 GB  (Mathlib and its dependencies, a real directory, no symbolic link)
+- .lake/build     110 MB  (the 8 modules of this package)
+- <clean>/cache   473 MB  (download cache)
+- No tracked file was modified: after the run every file has the sha256 of its committed version.
+  In particular Lake did not rewrite lake-manifest.json.  `.lake/` is ignored by .gitignore.
+- No change to lakefile.toml, lake-manifest.json or the scripts was needed.
+
+6. Sources against the development version
+------------------------------------------
+Compared with the development version of the same package (development commit 79fcbe4):
+- after removing all comments and blank lines, the eight files TreeEntropy/*.lean are identical;
+- the raw difference is confined to comments (references to the numbering of an earlier draft
+  were replaced by descriptions without numbers);
+- TreeEntropy.lean, lakefile.toml, lake-manifest.json, lean-toolchain, .gitignore and the four
+  files in scripts/ are byte-identical.
+
+sha256 of every file that was checked:
+fde850d24186b6e99c8c0debd641fb3ab85198b109eb66f71a1fea02bd6ea1b3  .gitignore
+1317a0beca23b047883fe2bbde157570d64476dfd753a4762c66678ced14fc48  README.md
+7494af17cf808e2f8e17ebae181addedb1e7d3ee93911cde568be6c4dd475919  TreeEntropy.lean
+45dec16e21674d068167122afb6d9200adc19cb0b620ec89fc716b72231b50db  TreeEntropy/APriori.lean
+6933b8072441e696da3a6c9c40dd476c43f327d80248676f5418026745b5dc6d  TreeEntropy/Darts.lean
+a79dcdaa97e23f82518e79dae4550c778f606dbaa4d86328211d67c573533144  TreeEntropy/Large.lean
+0764eb8e3af76aaf65f1a2bdc1006c88eaad70ffe21a8f4a57c4866829f4825e  TreeEntropy/Main.lean
+0329200623f0c172d08e7ddfb00f2e7fa2111d6b0ee07c535963feb1618e6b2e  TreeEntropy/OneVar.lean
+28277fb12c372329756a4d1cf066be35c3a27df2393ab51c320e1330b4a46a91  TreeEntropy/Sharp.lean
+54a7b7781935426ca787bb156bb0eb4ba763df06a51041727c425f41fbeaf440  TreeEntropy/Sum.lean
+f385844d77f9ffd42eacb7b2c47e71d2cb4140ff02334cffb2e240ddb80490e5  TreeEntropy/Table.lean
+e1ccbd8e1fd5eac71ac93a4874bb2fff5fd8abbd5863d5c475832b5505345ebd  lake-manifest.json
+4671bf82ce7459c6c9bafa4afb4c37856bfbb52adb093afc237825a22b32bc03  lakefile.toml
+f11739c25d1640e2b3fda8a98af6d64e97d7b2b1c99840535587a9079b3afee7  lean-toolchain
+8126ba5bda4583ebe50a5a43ce124051483e0aeba97e46cbceefb22274a98d02  scripts/Controls.lean
+c00c8e3bacc604d0b52ba72f9340890a441723c08889ebe6ed7f7d8f9b59450a  scripts/MustFail.lean
+92084d3a6e2803882e526c56c1c2217c2e434d7e1ce13ed5df739905ff864e5a  scripts/PrintAxioms.lean
+9bae9667f0cdcebef9eb4bed651e8c6deb189479069126bb1b7d3796e9dec7c2  scripts/check.sh
+
+7. Limitations
+--------------
+- The run was made on the machine on which the package was developed, by the agent that wrote
+  it.  The directory, the Mathlib checkout and the download cache were fresh; the elan and Lean
+  toolchain installation was the existing one.  This is a reproduction record, not an
+  independent review.
+- Mathlib was not rebuilt from source: its compiled files were downloaded from the Mathlib
+  cache, as `lake exe cache get` does.  leanchecker replays the 8 modules of this package in
+  the kernel; it does not replay Mathlib.
+- The finite tables are decided by kernel evaluation of natural-number arithmetic
+  (`decide +kernel`); this relies on the kernel's built-in arithmetic for natural numbers.
+- The check says nothing about the parts of the paper that are not formalised; they are listed
+  in README.md under "What is NOT covered".
